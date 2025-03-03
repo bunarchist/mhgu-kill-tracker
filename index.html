@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MHGU Kill Tracker</title>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a2e;
+            color: #e6e6e6;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #9797b1;
+            margin-bottom: 30px;
+        }
+        
+        .monster-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .monster-card {
+            background-color: #9797b1;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s;
+        }
+        
+        .monster-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .monster-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #000000;
+            margin-bottom: 10px;
+        }
+        
+        .killed-toggle {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .killed-toggle input {
+            margin-right: 10px;
+        }
+        
+        .rating-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        select {
+            background-color: #333355;
+            color: white;
+            border: none;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        
+        .stats {
+            background-color: #262648;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stats h2 {
+            color: #9797b1;
+            margin-top: 0;
+        }
+        
+        .stars {
+            color: #ff9900;
+            font-size: 1.2rem;
+        }
+        
+        .save-button {
+            display: block;
+            margin: 20px auto;
+            background-color: #9797b1;
+            color: #1a1a2e;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .save-button:hover {
+            background-color: #ffb84d;
+
+
+
+
+        }
+    </style>
+    <script src="monsters.js"></script>
+</head>
+<body>
+    
+    <h1>Monster Hunter: Generations Ultimate Kill Tracker</h1>
+    
+    <div class="monster-list" id="monsterList">
+        <!-- Monster cards will be generated here by JavaScript -->
+    </div>
+    
+    <button class="save-button" onclick="saveData()">Save Progress</button>
+    
+    <div class="stats">
+        <h2>Stats Summary</h2>
+        <p>Monsters killed: <span id="killedCount">0</span> / <span id="totalCount">0</span></p>
+        <p>Average monster rating: <span id="avgRating">0</span> / 5</p>
+        <p>Highest rated monsters: <span id="highestRated">None</span></p>
+    </div>
+    
+    <script>
+        //Import monster list
+        
+        // Initialize monster data from localStorage or create new data
+        let monsterData = JSON.parse(localStorage.getItem('monsterData')) || {};
+        
+        // Initialize each monster in data if not already present
+        monsters.forEach(monster => {
+            if (!monsterData[monster.name]) {
+                monsterData[monster.name] = {
+                    killed: false,
+                    rating: 0
+                };
+            }
+        });
+        
+        // Function to generate monster cards
+        function generateMonsterCards() {
+            const monsterList = document.getElementById('monsterList');
+            monsterList.innerHTML = '';
+            
+            monsters.forEach(monster => {
+                const data = monsterData[monster.name];
+                
+                const card = document.createElement('div');
+                card.className = 'monster-card';
+                
+                const nameElement = document.createElement('div');
+                nameElement.className = 'monster-name';
+                nameElement.textContent = monster.name;
+                
+                const killedToggle = document.createElement('div');
+                killedToggle.className = 'killed-toggle';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = data.killed;
+                checkbox.id = `killed-${monster.name}`;
+                checkbox.addEventListener('change', (e) => {
+                    monsterData[monster.name].killed = e.target.checked;
+                    updateStats();
+                });
+                
+                const label = document.createElement('label');
+                label.htmlFor = `killed-${monster.name}`;
+                label.textContent = 'Killed';
+                
+                killedToggle.appendChild(checkbox);
+                killedToggle.appendChild(label);
+                
+                const ratingContainer = document.createElement('div');
+                ratingContainer.className = 'rating-container';
+                
+                const ratingLabel = document.createElement('label');
+                ratingLabel.textContent = 'Rating:';
+                
+                const select = document.createElement('select');
+                select.addEventListener('change', (e) => {
+                    monsterData[monster.name].rating = parseInt(e.target.value);
+                    updateStars(starsSpan, parseInt(e.target.value));
+                    updateStats();
+                });
+                
+                // Add rating options
+                for (let i = 0; i <= 5; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = i === 0 ? 'Not rated' : i;
+                    if (data.rating === i) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                }
+                
+                const starsSpan = document.createElement('span');
+                starsSpan.className = 'stars';
+                updateStars(starsSpan, data.rating);
+                
+                ratingContainer.appendChild(ratingLabel);
+                ratingContainer.appendChild(select);
+                ratingContainer.appendChild(starsSpan);
+                
+                card.appendChild(nameElement);
+                card.appendChild(killedToggle);
+                card.appendChild(ratingContainer);
+                
+                monsterList.appendChild(card);
+            });
+            
+            updateStats();
+        }
+        
+        // Function to update star display
+        function updateStars(element, rating) {
+            element.textContent = rating > 0 ? '★'.repeat(rating) + '☆'.repeat(5 - rating) : '';
+        }
+        
+        // Function to update statistics
+        function updateStats() {
+            const killedCount = Object.values(monsterData).filter(m => m.killed).length;
+            const totalCount = monsters.length;
+            
+            document.getElementById('killedCount').textContent = killedCount;
+            document.getElementById('totalCount').textContent = totalCount;
+            
+            // Calculate average rating for killed monsters
+            const killedMonsters = Object.entries(monsterData)
+                .filter(([name, data]) => data.killed && data.rating > 0);
+            
+            let avgRating = 0;
+            if (killedMonsters.length > 0) {
+                const sum = killedMonsters.reduce((total, [name, data]) => total + data.rating, 0);
+                avgRating = (sum / killedMonsters.length).toFixed(1);
+            }
+            
+            document.getElementById('avgRating').textContent = avgRating;
+            
+            // Find highest rated monsters
+            const highestRating = Math.max(0, ...Object.values(monsterData)
+                .filter(m => m.killed)
+                .map(m => m.rating));
+            
+            const highestRatedMonsters = Object.entries(monsterData)
+                .filter(([name, data]) => data.killed && data.rating === highestRating && highestRating > 0)
+                .map(([name, data]) => name);
+            
+            document.getElementById('highestRated').textContent = 
+                highestRatedMonsters.length > 0 ? highestRatedMonsters.join(', ') : 'None';
+        }
+        
+        // Function to save data to localStorage
+        function saveData() {
+            localStorage.setItem('monsterData', JSON.stringify(monsterData));
+            alert('Progress saved!');
+        }
+        
+        // Initialize the tracker
+        generateMonsterCards();
+    </script>
+</body>
+</html>
