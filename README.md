@@ -8,7 +8,7 @@ You can check it out through the GitHub pages link on the right hand side of thi
 
 Changelog / Version History
 ---
-Current Version: v0.1 - Initial, "complete" functionality of checklist - Released 3/1/25
+Current Version: v0.1 - Initial, "complete" functionality of checklist - Released 3/3/25
 
 Planned Features
 ---
